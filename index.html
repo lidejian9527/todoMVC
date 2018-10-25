@@ -23,9 +23,6 @@
 			<input id="toggle-all" class="toggle-all" type="checkbox" @click='allCheck(!isAllCheck)' :checked='isAllCheck'>
 			<label for="toggle-all">Mark all as complete</label>
 			<ul class="todo-list">
-				<!-- These are here just to show the structure of the list items -->
-				<!-- List items should get the class `editing` when editing and `completed` when marked as completed -->
-
 				<li v-for="(item, i) in filterList" :key="i" :class="{completed: item.isFinish}">
 					<div class="view">
 						<input class="toggle" type="checkbox" :checked='item.isFinish' @click='item.isFinish=!item.isFinish'>

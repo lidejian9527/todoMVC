@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Template • TodoMVC</title>
+	<link rel="stylesheet" href="node_modules/todomvc-common/base.css">
+	<link rel="stylesheet" href="node_modules/todomvc-app-css/index.css">
+	<!-- CSS overrides - remove if you don't need it -->
+	<link rel="stylesheet" href="css/app.css">
+
+</head>
+
+<body>
+	<section class="todoapp" id="app" v-cloak>
+		<header class="header">
+			<h1>todos</h1>
+			<input class="new-todo" placeholder="What needs to be done?" autofocus v-model="txt" @keydown.13='addList'>
+		</header>
+		<!-- This section should be hidden by default and shown when there are todos -->
+		<section class="main">
+			<input id="toggle-all" class="toggle-all" type="checkbox" @click='allCheck(!isAllCheck)' :checked='isAllCheck'>
+			<label for="toggle-all">Mark all as complete</label>
+			<ul class="todo-list">
+				<!-- These are here just to show the structure of the list items -->
+				<!-- List items should get the class `editing` when editing and `completed` when marked as completed -->
+
+				<li v-for="(item, i) in filterList" :key="i" :class="{completed: item.isFinish}">
+					<div class="view">
+						<input class="toggle" type="checkbox" :checked='item.isFinish' @click='item.isFinish=!item.isFinish'>
+						<label>{{item.content}}</label>
+						<!-- <input type="text" v-show="isUpdate" v-show="item.content"> -->
+						<button class="destroy" @click='delList(item.id)'></button>
+					</div>
+					<input class="edit" value="Create a TodoMVC template">
+				</li>
+			</ul>
+		</section>
+		<!-- This footer should hidden by default and shown when there are todos -->
+
+		<!-- <footer class="footer" v-show="filterList.length"> -->
+		<footer class="footer">
+			<!-- This should be `0 items left` by default -->
+			<span class="todo-count">
+				<strong>{{filteritems}}</strong> item left</span>
+			<!-- Remove this if you don't implement routing -->
+			<ul class="filters">
+				<li>
+					<a :class="{selected: term==0}" href="#/" @click.prevent='term=0'>All</a>
+				</li>
+				<li>
+					<a :class="{selected: term==1}" href="#/active" @click.prevent='term=1'>Active</a>
+				</li>
+				<li>
+					<a :class="{selected: term==2}" href="#/completed" @click.prevent='term=2'>Completed</a>
+				</li>
+			</ul>
+			<!-- Hidden if no completed items are left ↓ -->
+			<button class="clear-completed" @click='delCompleted'>Clear completed</button>
+		</footer>
+	</section>
+	<footer class="info">
+		<p>Double-click to edit a todo</p>
+		<!-- Remove the below line ↓ -->
+		<p>Template by
+			<a href="http://sindresorhus.com">Sindre Sorhus</a>
+		</p>
+		<!-- Change this out with your name and url ↓ -->
+		<p>Created by
+			<a href="http://todomvc.com">you</a>
+		</p>
+		<p>Part of
+			<a href="http://todomvc.com">TodoMVC</a>
+		</p>
+	</footer>
+	<!-- Scripts here. Don't remove ↓ -->
+	<script src="node_modules/todomvc-common/base.js"></script>
+	<script src="./node_modules/axios/dist/axios.min.js"></script>
+	<script src="./node_modules/_art-template@4.13.1@art-template/lib/template-web.js"></script>
+	<script src="./node_modules/vue/dist/vue.js"></script>
+	<script type="text/template" id="tpl">
+			{{each list}}
+			<li {{if $value.isFinish==1 }}class='completed'{{/if}}>
+				<div class="view" data-id='{{$value.id}}' data-isFinish='{{$value.isFinish}}'>
+					<input class="toggle" type="checkbox" {{if $value.isFinish==1 }}checked{{/if}}>
+					<label>{{$value.content}}</label>
+					<button class="destroy"></button>
+				</div>
+				<input class="edit" value="Create a TodoMVC template">
+			</li>
+			{{/each}}
+		</script>
+	<!-- <script src="js/app.js"></script> -->
+	<script>
+		const vm = new Vue({
+			el: '#app',
+			data: {
+				txt: '',
+				list: JSON.parse(localStorage.getItem('list')) || [],
+				// 过滤条件，0是全部，1是显示未完成的，2是显示完成的
+				term: 0,
+				isAllCheck: false,
+				itemId: JSON.parse(localStorage.getItem('itemId')) || 1,
+				// isUpdate: false
+			},
+			methods: {
+				addList() {
+					if(this.txt.trim() == '') {
+						return alert('请输入内容');
+					}
+					this.list.unshift({ id: this.itemId++, content: this.txt.trim(), isFinish: false });
+					this.txt = '';
+				},
+				delList(ID) {
+					if (confirm('确定删除该任务？')) {
+						this.list.forEach((e, i) => {
+							if (e.id === ID) {
+								this.list.splice(i, 1);
+							}
+						})
+					}
+				},
+				delCompleted() {
+					this.list.forEach((e, i) => {
+						if (e.isFinish) {
+							this.list.splice(i--, 1);
+						}
+					});
+					this.list.forEach((e, i) => {
+						if (e.isFinish) {
+							this.list.splice(i--, 1);
+						}
+					});
+				},
+				allCheck(flag) {
+					this.list.forEach(e => {
+						e.isFinish = flag;
+					});
+				}
+			},
+			computed: {
+				filterList() {
+					const { term, list } = this;
+					return term === 0 ? list : term === 1 ? list.filter(c => !c.isFinish) : list.filter(c => c.isFinish);
+				},
+				filteritems() {
+					let count = 0;
+					this.list.forEach(e => {
+						if (!e.isFinish) {
+							count++;
+						}
+					});
+					return count;
+				},
+			},
+			updated() {
+				localStorage.setItem('list', JSON.stringify(vm.list));
+				localStorage.setItem('itemId', this.itemId);
+				if (this.filterList.length === 0) {
+					this.term = 0;
+				}
+			},
+			watch: {
+				list: {
+					handler: function () {
+						let flag = true;
+						this.list.forEach(e => {
+							if (!e.isFinish) {
+								flag = false;
+							}
+						});
+						this.isAllCheck = flag;
+					},
+					deep: true
+				},
+				// term(newVal, oldVal) {
+				// 	if (this.filterList.length === 0) {
+				// 		alert('这一项没有内容');
+				// 		this.term = 0;
+				// 	}
+				// }
+			}
+		});
+	</script>
+
+</body>
+
+</html>
